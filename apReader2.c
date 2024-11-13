@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int mapIndex = 0;
+int mapIndex = -1;
 
 struct Map{
     char *key;
@@ -44,11 +44,12 @@ int keyReader(char *key, char *buffer){
 }
 
 void getData(struct Map2 **m,FILE* fileptr){
-    char buffer[100];
-    struct Map2 temp;
+    char buffer[200];
     while(fgets(buffer, sizeof(buffer),fileptr)){
+        if (strlen(buffer) <= 1) continue; // Skip empty lines
         int i = 1,index = 0;
-
+        struct Map2 temp;
+        temp.valueCount = 0;
         // reads main key (user1/user2)
         temp.key = (char*)malloc(1 * sizeof(char));
         while(buffer[i] != '|'){
@@ -56,13 +57,12 @@ void getData(struct Map2 **m,FILE* fileptr){
             temp.key[index++] = buffer[i++];
         } 
         temp.key[index] = '\0';
-
-        temp.values = (struct Map*)malloc(sizeof(struct Map));
-        struct Map t;
-        int count = 0;
-
-        while(fgets(buffer, sizeof(buffer), fileptr) && strlen(buffer) > 1){
+        temp.values = NULL;
+        
+        while(fgets(buffer, sizeof(buffer), fileptr) && strlen(buffer) > 2){
+            if (strlen(buffer) <= 1) break;
             i = 1,index = 0;
+            struct Map t;
             //reads key values inside main (name,email,etc)
             t.key = (char*)malloc(1 * sizeof(char));
             while(buffer[i] != '|'){
@@ -70,17 +70,16 @@ void getData(struct Map2 **m,FILE* fileptr){
                 t.key[index++] = buffer[i++];
             }
             t.key[index] = '\0';
-            
             i++; index = 0;//i++ skips '|'
 
             //reads values
             t.value =  (char*)malloc(1 * sizeof(char));
             while(buffer[i] != '~' && buffer[i] != '\0'){
-                t.value = (char*)realloc(temp.key, (index + 2) * sizeof(char)); 
+                t.value = (char*)realloc(t.value, (index + 2) * sizeof(char)); 
                 t.value[index++] = buffer[i++];
+                
             }
             t.value[index] = '\0';
-            
             temp.valueCount++;
             temp.values = (struct Map*)realloc(temp.values, temp.valueCount * sizeof(struct Map));
             temp.values[temp.valueCount - 1] = t;
@@ -88,8 +87,7 @@ void getData(struct Map2 **m,FILE* fileptr){
 
         // Add the current Map2 struct to the array
         *m = (struct Map2*)realloc(*m, (mapIndex + 2) * sizeof(struct Map2));
-        (*m)[mapIndex++] = temp;
-
+        (*m)[++mapIndex] = temp;
     }
 }
 
@@ -99,7 +97,7 @@ void display(struct Map2 *m){
         for(int i = 0; i <= mapIndex; i++){
             printf("%s : \n",m[i].key);
             struct Map*temp = m[i].values;
-            for(int j = 0; j < 5; j++){
+            for(int j = 0; j < m->valueCount; j++){
                 printf("%s : %s\n",temp[j].key,temp[j].value);
             }
         }
@@ -112,6 +110,7 @@ int main(){
     struct Map2 *map = (struct Map2*)malloc((sizeof(struct Map2))); 
     getData(&map,fileptr);
     display(map);
-    free(map);
+    freeMap2(map);  
+    fclose(fileptr);
     return 0;
 }

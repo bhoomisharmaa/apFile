@@ -44,9 +44,10 @@ int keyReader(char *key, char *buffer){
     return i;
 }
 
-const char* getValueByMap(struct Map *arr,const char *key){
+const char* getValueByKey(struct Map *arr,const char *key){
     int l = sizeof(arr) / sizeof(arr[0]); 
     for(int i = 0; i < l; i++){
+        
         if (strcmp(arr[i].key, key) == 0) {
             return arr[i].value;
         }
@@ -54,7 +55,7 @@ const char* getValueByMap(struct Map *arr,const char *key){
     return "!Invalid Key!";
 }
 
-const char* getValueByMap2(struct Map2 *arr,const char* mainKey,const char* key){
+const char* getValueByMainKey(struct Map2 *arr,const char* mainKey,const char* key){
     for(int i = 0; i <= mapIndex; i++){
         struct Map*temp = arr[i].values;
         if (strcmp(arr[i].key, mainKey) == 0){
@@ -65,6 +66,17 @@ const char* getValueByMap2(struct Map2 *arr,const char* mainKey,const char* key)
     }
     return "!Invalid Key!";
 }
+
+// #define getValue(...) _getValue(NULL,NULL,NULL,NULL)
+
+// const char* _getValue(struct Map *arr1,const char *key,struct Map2 *arr2,const char* mainKey){
+//     if(!arr2 && !mainKey){
+//         return getValueByMap(arr1,key);
+//     } 
+//     if(!arr1){
+//         return getValueByMap2(arr2,mainKey,key);
+//     }
+// }
 
 struct Map* getValuesArray(struct Map2 *arr,const char* mainKey){
     for(int i = 0; i <= mapIndex; i++){
@@ -140,7 +152,8 @@ int main(){
     FILE *fileptr = fileReader("second.ap");
     struct Map2 *map = (struct Map2*)malloc((sizeof(struct Map2))); 
     getData(&map,fileptr);
-    //display(map);
+    display(map);
+    //printf("%s\n",getValue(arr2=map,key="name",mainKey="user1"));
     freeMap2(map);  
     fclose(fileptr);
     return 0;

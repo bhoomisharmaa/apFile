@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 int mapIndex = -1;
 
@@ -41,6 +42,28 @@ int keyReader(char *key, char *buffer){
         } 
     key[index] = '\0';
     return i;
+}
+
+const char* getValueByMap(struct Map *arr,const char *key){
+    int l = sizeof(arr) / sizeof(arr[0]); 
+    for(int i = 0; i < l; i++){
+        if (strcmp(arr[i].key, key) == 0) {
+            return arr[i].value;
+        }
+    }
+    return "!Invalid Key!";
+}
+
+const char* getValueByMap2(struct Map2 *arr,const char* mainKey,const char* key){
+    for(int i = 0; i <= mapIndex; i++){
+        struct Map*temp = arr[i].values;
+        if (strcmp(arr[i].key, mainKey) == 0){
+            for(int j = 0; j < arr[i].valueCount; j++){
+                if (strcmp(temp[j].key, key) == 0) return temp[j].value;
+            }
+        } 
+    }
+    return "!Invalid Key!";
 }
 
 void getData(struct Map2 **m,FILE* fileptr){
@@ -100,7 +123,6 @@ void display(struct Map2 *m){
             for(int j = 0; j < m->valueCount; j++){
                 printf("%s : %s\n",temp[j].key,temp[j].value);
             }
-            printf("\n");
         }
     } 
 }
@@ -110,7 +132,7 @@ int main(){
     FILE *fileptr = fileReader(filePath);
     struct Map2 *map = (struct Map2*)malloc((sizeof(struct Map2))); 
     getData(&map,fileptr);
-    display(map);
+    //display(map);
     freeMap2(map);  
     fclose(fileptr);
     return 0;

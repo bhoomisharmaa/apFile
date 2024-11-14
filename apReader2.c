@@ -66,6 +66,15 @@ const char* getValueByMap2(struct Map2 *arr,const char* mainKey,const char* key)
     return "!Invalid Key!";
 }
 
+struct Map* getValuesArray(struct Map2 *arr,const char* mainKey){
+    for(int i = 0; i <= mapIndex; i++){
+        struct Map*temp = arr[i].values;
+        if (strcmp(arr[i].key, mainKey) == 0) return arr[i].values;
+    }
+
+    return NULL;
+}
+
 void getData(struct Map2 **m,FILE* fileptr){
     char buffer[200];
     while(fgets(buffer, sizeof(buffer),fileptr)){

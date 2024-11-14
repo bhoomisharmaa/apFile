@@ -100,6 +100,7 @@ void display(struct Map2 *m){
             for(int j = 0; j < m->valueCount; j++){
                 printf("%s : %s\n",temp[j].key,temp[j].value);
             }
+            printf("\n");
         }
     } 
 }

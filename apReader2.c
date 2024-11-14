@@ -16,7 +16,7 @@ struct Map2{
     int valueCount;
 };
 
-FILE* fileReader(char *filePath){
+FILE* fileReader(const char *filePath){
     return fopen(filePath,"r");
 }
 
@@ -137,8 +137,7 @@ void display(struct Map2 *m){
 }
 
 int main(){
-    char filePath[] = "second.ap";
-    FILE *fileptr = fileReader(filePath);
+    FILE *fileptr = fileReader("second.ap");
     struct Map2 *map = (struct Map2*)malloc((sizeof(struct Map2))); 
     getData(&map,fileptr);
     //display(map);

@@ -17,4 +17,8 @@ FILE* fileAppender(char* filePath){
     return fopen(filePath,"a");
 }
 
+void writeData(FILE *fileptr){
+    
+}
+
 /*[[user3,[[name,bhoomi],[grade,12]]],[user4,[[name,bhoomi],[grade,12]]]]*/

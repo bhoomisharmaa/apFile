@@ -13,10 +13,7 @@ FILE* fileReader(const char *filePath){
     return fopen(filePath,"r");
 }
 
-int index = -1;
-int dataIndex = 0;
-
-void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNested){
+void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNested,int index,char* stack,int *stackIndex){
     char *data = dataString[*dataStringIndex];
     char ch = data[strlen(data) - 1];
 
@@ -24,7 +21,6 @@ void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNest
     temp.key = NULL;
     temp.nestedValues = NULL;
     temp.value = NULL;
-    static int nestedIndex = 0;
     
     if(ch == '~' && strlen(data) > 1){
         int i = 1,j = 0;
@@ -47,20 +43,30 @@ void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNest
                 temp.value[j++] = data[i++];
             } 
             temp.value[j] = '\0';
-            arr = (struct Map*)realloc(arr, (nestedIndex + 1) * sizeof(struct Map));
-            arr[nestedIndex++] = temp;
-            printf("%s %s\n",temp.key,temp.value);
-
+            arr = (struct Map*)realloc(arr, (index + 1) * sizeof(struct Map));
+            arr[index] = temp;
         }
 
         if(isNested){
             *dataStringIndex = *dataStringIndex+1;
-            readLines(dataString,dataStringIndex,temp.nestedValues,1);
+            readLines(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
         }
     }
-    else if(ch == '~') return;
+    else if(ch == '~'){
+        
+        if(*stackIndex > 0){
+            *dataStringIndex = *dataStringIndex+1;
+            stack[*stackIndex] = ' ';
+            *stackIndex = *stackIndex-1;
+            readLines(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
+        }
+        else return;
+    } 
     else if(ch == '|'){
         int i = 1,j = 0;
+        *stackIndex = *stackIndex+1;
+        stack[*stackIndex] = '|';
+        
         while(data[i] != '\0' && data[i] != '\n' && data[i] != '|'){
             // Keys
             temp.key = (char*)malloc(1 * sizeof(char));
@@ -68,15 +74,13 @@ void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNest
                 temp.key = (char*)realloc(temp.key, (j + 1) * sizeof(char)); 
                 temp.key[j++] = data[i++];
             } 
-            temp.key[index] = '\0';
+            temp.key[j] = '\0';
         }
-        //printf("%s\n",buffer);
         temp.nestedValues = (struct Map*)malloc(1 * sizeof(struct Map));
-        printf("%s\n",temp.key);
+        arr = (struct Map*)realloc(arr, (index + 1) * sizeof(struct Map));
         *dataStringIndex = *dataStringIndex+1;
-        readLines(dataString,dataStringIndex,temp.nestedValues,1);
-        arr = (struct Map*)realloc(arr, (index + 2) * sizeof(struct Map));
-        arr[++index] = temp;
+        readLines(dataString,dataStringIndex,temp.nestedValues,1,0,stack,stackIndex);
+        arr[index] = temp;
     }
 }
 
@@ -101,11 +105,21 @@ void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNest
     
 }*/
 
+void displayData(struct Map *arr){
+    for(int i = 0; i < 2; i++){
+        if(arr[i].value){
+            printf("%s : %s\n",arr[i].key,arr[i].value);
+        }
+    }
+}
+
 int main(){
     FILE *filePtr = fileReader("third.ap");
     struct Map *arr = NULL;
     char **dataStringArr = (char**)malloc(sizeof(char*));
     char buffer[100];
+    int dataIndex = 0;
+    
     
     while(fgets(buffer,sizeof(buffer),filePtr)){
         size_t length = strlen(buffer);
@@ -120,29 +134,29 @@ int main(){
         dataIndex++;
     }
     //readData(fileptr,dataStringArr);
-
-    int i = 0;
-    while(i <= dataIndex){
+    char *stack = (char*)malloc(sizeof(char)*dataIndex);
+    int stackIndex = -1;
+    int i = 0,index = 0;
+    while(i < dataIndex){
         char *data = dataStringArr[i];
         char ch = data[strlen(data) - 1];
         int isNested = 0;
         if(ch == '|') isNested = 1;
-        readLines(dataStringArr,&i,arr,isNested);
+        readLines(dataStringArr,&i,arr,isNested,index,stack,&stackIndex);
         i++;
+        index++;
     }
 
-    for (i = 0; i < index; i++) {
+    for (i = 0; i < 2; i++) {
+        printf("%s %i\n",arr[i].key,i);
         free(arr[i].key);
         free(arr[i].value);
     }
     free(arr);
-    for (int i = 0; i < dataIndex; i++) {
+    for (int i = 0; i <= dataIndex; i++) {
         free(dataStringArr[i]);
     }
     free(dataStringArr);
-    //display(map);
-    //printf("%s\n",getValue(arr2=map,key="name",mainKey="user1"));
-    //freeMap2(map);  
     fclose(filePtr);
     return 0;
 }

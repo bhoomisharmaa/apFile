@@ -13,7 +13,7 @@ FILE* fileReader(const char *filePath){
     return fopen(filePath,"r");
 }
 
-void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNested,int index,char* stack,int *stackIndex){
+void processDataStructures(char** dataString,int *dataStringIndex,struct Map **arr,int isNested,int index,char* stack,int *stackIndex){
     char *data = dataString[*dataStringIndex];
     char ch = data[strlen(data) - 1];
 
@@ -43,22 +43,21 @@ void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNest
                 temp.value[j++] = data[i++];
             } 
             temp.value[j] = '\0';
-            arr = (struct Map*)realloc(arr, (index + 1) * sizeof(struct Map));
-            arr[index] = temp;
+            *arr = (struct Map*)realloc(*arr, (index + 1) * sizeof(struct Map));
+            (*arr)[index] = temp;
         }
 
         if(isNested){
             *dataStringIndex = *dataStringIndex+1;
-            readLines(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
-        }
+            processDataStructures(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
+        }  
     }
-    else if(ch == '~'){
-        
+    else if(ch == '~'){ 
         if(*stackIndex > 0){
             *dataStringIndex = *dataStringIndex+1;
             stack[*stackIndex] = ' ';
             *stackIndex = *stackIndex-1;
-            readLines(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
+            processDataStructures(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
         }
         else return;
     } 
@@ -77,33 +76,43 @@ void readLines(char** dataString,int *dataStringIndex,struct Map *arr,int isNest
             temp.key[j] = '\0';
         }
         temp.nestedValues = (struct Map*)malloc(1 * sizeof(struct Map));
-        arr = (struct Map*)realloc(arr, (index + 1) * sizeof(struct Map));
+        *arr = (struct Map*)realloc(*arr, (index + 1) * sizeof(struct Map));
         *dataStringIndex = *dataStringIndex+1;
-        readLines(dataString,dataStringIndex,temp.nestedValues,1,0,stack,stackIndex);
-        arr[index] = temp;
+        processDataStructures(dataString,dataStringIndex,&temp.nestedValues,1,0,stack,stackIndex);
+        (*arr)[index] = temp;
     }
 }
 
-/*void readData(FILE *filePtr,char **dataStringArr){
+void readFileIntoArray(FILE *filePtr, char ***dataStringArr, int *dataIndex) {
     char buffer[100];
-    
-    while(fgets(buffer,sizeof(buffer),filePtr)){
+
+    while (fgets(buffer, sizeof(buffer), filePtr)) {
         size_t length = strlen(buffer);
         if (buffer[length - 1] == '\n') {
             buffer[length - 1] = '\0'; 
         }
-        char **temp = (char**)realloc(dataStringArr, (dataIndex + 1) * sizeof(char*));
-        dataStringArr = temp;
-        // Allocate memory for the current string and copy the buffer
-        dataStringArr[dataIndex] = (char*)malloc((strlen(buffer) + 1) * sizeof(char)); // +1 for null terminator
-        strcpy(dataStringArr[dataIndex], buffer);
-        dataIndex++;
-    }
 
-    
-    //printf(":p %s %s\n",arr[0].key);
-    
-}*/
+        // Reallocate memory for the array of strings
+        char **temp = (char**)realloc(*dataStringArr, (*dataIndex + 1) * sizeof(char*));
+        if (temp == NULL) {
+            // Handle memory allocation failure
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        *dataStringArr = temp;
+
+        // Allocate memory for the current string and copy the buffer
+        (*dataStringArr)[*dataIndex] = (char*)malloc((strlen(buffer) + 1) * sizeof(char)); // +1 for null terminator
+        if ((*dataStringArr)[*dataIndex] == NULL) {
+            // Handle memory allocation failure
+            fprintf(stderr, "Memory allocation for string failed\n");
+            exit(1);
+        }
+        strcpy((*dataStringArr)[*dataIndex], buffer);
+
+        (*dataIndex)++;
+    }
+}
 
 void displayData(struct Map *arr){
     for(int i = 0; i < 2; i++){
@@ -120,20 +129,7 @@ int main(){
     char buffer[100];
     int dataIndex = 0;
     
-    
-    while(fgets(buffer,sizeof(buffer),filePtr)){
-        size_t length = strlen(buffer);
-        if (buffer[length - 1] == '\n') {
-            buffer[length - 1] = '\0'; 
-        }
-        char **temp = (char**)realloc(dataStringArr, (dataIndex + 1) * sizeof(char*));
-        dataStringArr = temp;
-        // Allocate memory for the current string and copy the buffer
-        dataStringArr[dataIndex] = (char*)malloc((strlen(buffer) + 1) * sizeof(char)); // +1 for null terminator
-        strcpy(dataStringArr[dataIndex], buffer);
-        dataIndex++;
-    }
-    //readData(fileptr,dataStringArr);
+    readFileIntoArray(filePtr,&dataStringArr,&dataIndex);
     char *stack = (char*)malloc(sizeof(char)*dataIndex);
     int stackIndex = -1;
     int i = 0,index = 0;
@@ -142,15 +138,15 @@ int main(){
         char ch = data[strlen(data) - 1];
         int isNested = 0;
         if(ch == '|') isNested = 1;
-        readLines(dataStringArr,&i,arr,isNested,index,stack,&stackIndex);
+        processDataStructures(dataStringArr,&i,&arr,isNested,index,stack,&stackIndex);
         i++;
         index++;
     }
 
-    for (i = 0; i < 2; i++) {
-        printf("%s %i\n",arr[i].key,i);
+    for (i = 0; i < index; i++) {
         free(arr[i].key);
         free(arr[i].value);
+        free(arr[i].nestedValues);
     }
     free(arr);
     for (int i = 0; i <= dataIndex; i++) {

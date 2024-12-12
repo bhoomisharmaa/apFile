@@ -46,21 +46,15 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map **a
                 temp.value[j++] = data[i++];
             } 
             temp.value[j] = '\0';
-            if(stack[*stackIndex].key == NULL){
-                printf("%s\n",data);
-            }
             *arr = (struct Map*)realloc(*arr, (index + 1) * sizeof(struct Map));
-            
             (*arr)[index] = temp;
-            //printf("%s %d\n",data,index);
-            //printf(":))%s %d\n",data,index);
-            //printf("%d %s\n",index,temp.key);
 
         }
         
         if(isNested){
             *dataStringIndex = *(dataStringIndex)+1;
-            processDataStructures(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
+            stack[*stackIndex].nestedValuesIndex++;
+            processDataStructures(dataString,dataStringIndex,&stack[*stackIndex].nestedValues,1,stack[*stackIndex].nestedValuesIndex,stack,stackIndex);
         }  
     }
     else if(ch == '~'){

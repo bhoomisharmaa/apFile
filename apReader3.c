@@ -7,13 +7,14 @@ struct Map{
     char *key;
     char *value;
     struct Map *nestedValues;
+    int nestedValuesIndex;
 };
 
 FILE* fileReader(const char *filePath){
     return fopen(filePath,"r");
 }
 
-void processDataStructures(char** dataString,int *dataStringIndex,struct Map **arr,int isNested,int index,char* stack,int *stackIndex){
+void processDataStructures(char** dataString,int *dataStringIndex,struct Map **arr,int isNested,int index,struct Map* stack,int *stackIndex){
     char *data = dataString[*dataStringIndex];
     char ch = data[strlen(data) - 1];
 
@@ -21,8 +22,10 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map **a
     temp.key = NULL;
     temp.nestedValues = NULL;
     temp.value = NULL;
+    temp.nestedValuesIndex = 0;
     
     if(ch == '~' && strlen(data) > 1){
+        
         int i = 1,j = 0;
         while(data[i] != '\0' && data[i] != '\n' && data[i] != '~'){
             // Keys
@@ -43,28 +46,28 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map **a
                 temp.value[j++] = data[i++];
             } 
             temp.value[j] = '\0';
+            if(stack[*stackIndex].key == NULL){
+                printf("%s\n",data);
+            }
             *arr = (struct Map*)realloc(*arr, (index + 1) * sizeof(struct Map));
+            
             (*arr)[index] = temp;
-        }
+            //printf("%s %d\n",data,index);
+            //printf(":))%s %d\n",data,index);
+            //printf("%d %s\n",index,temp.key);
 
+        }
+        
         if(isNested){
-            *dataStringIndex = *dataStringIndex+1;
+            *dataStringIndex = *(dataStringIndex)+1;
             processDataStructures(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
         }  
     }
-    else if(ch == '~'){ 
-        if(*stackIndex > 0){
-            *dataStringIndex = *dataStringIndex+1;
-            stack[*stackIndex] = ' ';
-            *stackIndex = *stackIndex-1;
-            processDataStructures(dataString,dataStringIndex,arr,1,index+1,stack,stackIndex);
-        }
-        else return;
+    else if(ch == '~'){
+        return;
     } 
     else if(ch == '|'){
         int i = 1,j = 0;
-        *stackIndex = *stackIndex+1;
-        stack[*stackIndex] = '|';
         
         while(data[i] != '\0' && data[i] != '\n' && data[i] != '|'){
             // Keys
@@ -78,12 +81,21 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map **a
         temp.nestedValues = (struct Map*)malloc(1 * sizeof(struct Map));
         *arr = (struct Map*)realloc(*arr, (index + 1) * sizeof(struct Map));
         *dataStringIndex = *dataStringIndex+1;
+        *stackIndex = *stackIndex+1;
+        stack[*stackIndex] = temp;
         processDataStructures(dataString,dataStringIndex,&temp.nestedValues,1,0,stack,stackIndex);
+        *stackIndex = *(stackIndex)-1;
+        if(*stackIndex >= 0){
+            *dataStringIndex = *dataStringIndex+1;
+            stack[*stackIndex].nestedValuesIndex++;
+            processDataStructures(dataString,dataStringIndex,&stack[*stackIndex].nestedValues,1,stack[*stackIndex].nestedValuesIndex,stack,stackIndex);
+        }
         (*arr)[index] = temp;
+        //printf(":)%d %s\n",index,temp.key);
     }
 }
 
-void readFileIntoArray(FILE *filePtr, char ***dataStringArr, int *dataIndex) {
+void readFileIntoArray(FILE *filePtr, char ***dataStringArr, int *dataIndex,int *numberOfNestedData) {
     char buffer[100];
 
     while (fgets(buffer, sizeof(buffer), filePtr)) {
@@ -100,6 +112,7 @@ void readFileIntoArray(FILE *filePtr, char ***dataStringArr, int *dataIndex) {
             exit(1);
         }
         *dataStringArr = temp;
+        
 
         // Allocate memory for the current string and copy the buffer
         (*dataStringArr)[*dataIndex] = (char*)malloc((strlen(buffer) + 1) * sizeof(char)); // +1 for null terminator
@@ -109,15 +122,21 @@ void readFileIntoArray(FILE *filePtr, char ***dataStringArr, int *dataIndex) {
             exit(1);
         }
         strcpy((*dataStringArr)[*dataIndex], buffer);
+        if(strlen(buffer) <= 2) *(numberOfNestedData) = (*numberOfNestedData) + 1;
 
         (*dataIndex)++;
     }
 }
 
-void displayData(struct Map *arr){
-    for(int i = 0; i < 2; i++){
+void displayData(struct Map *arr,int indexRange){
+    for(int i = 0; i < indexRange; i++){
         if(arr[i].value){
             printf("%s : %s\n",arr[i].key,arr[i].value);
+        }
+        else{
+            printf("%s {\n",arr[i].key);
+            displayData(arr[i].nestedValues,arr[i].nestedValuesIndex);
+            printf("}\n");
         }
     }
 }
@@ -127,10 +146,11 @@ int main(){
     struct Map *arr = NULL;
     char **dataStringArr = (char**)malloc(sizeof(char*));
     char buffer[100];
-    int dataIndex = 0;
+    int dataIndex = 0,numberOfNestedData = 0;
     
-    readFileIntoArray(filePtr,&dataStringArr,&dataIndex);
-    char *stack = (char*)malloc(sizeof(char)*dataIndex);
+    readFileIntoArray(filePtr,&dataStringArr,&dataIndex,&numberOfNestedData);
+    printf("%d\n",numberOfNestedData);
+    struct Map *stack = (struct Map*)malloc(sizeof(struct Map)*numberOfNestedData);
     int stackIndex = -1;
     int i = 0,index = 0;
     while(i < dataIndex){
@@ -138,7 +158,9 @@ int main(){
         char ch = data[strlen(data) - 1];
         int isNested = 0;
         if(ch == '|') isNested = 1;
+        //printf(":p%s\n",dataStringArr[i]);
         processDataStructures(dataStringArr,&i,&arr,isNested,index,stack,&stackIndex);
+        printf("%s\n",arr[0].key);
         i++;
         index++;
     }

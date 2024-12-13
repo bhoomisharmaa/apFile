@@ -58,7 +58,7 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map *ar
         (*stackIndex)--;
         if(*stackIndex >= 0){
             (*dataStringIndex)++;
-            processDataStructures(dataString,dataStringIndex,stack[*stackIndex].nestedValues,1,&(stack[*stackIndex].nestedValuesIndex)+1,stack,stackIndex);
+            processDataStructures(dataString,dataStringIndex,stack[*stackIndex].nestedValues,1,&(stack[*stackIndex].nestedValuesIndex),stack,stackIndex);
         }
         return;
     } 

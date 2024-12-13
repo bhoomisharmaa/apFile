@@ -58,6 +58,7 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map *ar
         (*stackIndex)--;
         if(*stackIndex >= 0){
             (*dataStringIndex)++;
+            stack[*stackIndex].nestedValuesIndex++;
             processDataStructures(dataString,dataStringIndex,stack[*stackIndex].nestedValues,1,&(stack[*stackIndex].nestedValuesIndex),stack,stackIndex);
         }
         return;
@@ -145,9 +146,7 @@ int main(){
         int isNested = 0;
         if(ch == '|') isNested = 1;
         processDataStructures(dataStringArr,&i,arr,isNested,&index,stack,&stackIndex);
-        //printf("%s\n",arr[0].key);
         i++;
-        //index++;
     }
 
     displayData(arr,index);

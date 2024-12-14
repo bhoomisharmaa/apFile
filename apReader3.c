@@ -45,8 +45,8 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map *ar
             } 
             temp.value[j] = '\0';
             arr[*index] = temp;
-            //printf("%d %s\n",*index,arr[*index].key);
             (*index)++;
+            
         }
         
         if(isNested){
@@ -54,14 +54,6 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map *ar
             processDataStructures(dataString,dataStringIndex,stack[*stackIndex].nestedValues,1,index,stack,stackIndex);
         } 
     }
-    else if(ch == '~'){
-        (*stackIndex)--;
-        if(*stackIndex >= 0){
-            (*dataStringIndex)++;
-            processDataStructures(dataString,dataStringIndex,stack[*stackIndex].nestedValues,1,&(stack[*stackIndex].nestedValuesIndex),stack,stackIndex);
-        }
-        return;
-    } 
     else if(ch == '|'){
         int i = 1,j = 0;
         
@@ -76,9 +68,17 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map *ar
         (*stackIndex)++;
         stack[*stackIndex] = temp;
         processDataStructures(dataString,dataStringIndex,temp.nestedValues,1,&temp.nestedValuesIndex,stack,stackIndex);
-        arr[*index] = temp;
-        //printf("%d %s\n",*index,arr[*index].key);
-        (*index)++;
+        (*stackIndex)--;
+        if(*stackIndex >= 0){
+            arr[*index] = temp;
+            (*index)++;
+            (*dataStringIndex)++;
+            processDataStructures(dataString,dataStringIndex,stack[*stackIndex].nestedValues,1,index,stack,stackIndex);
+        }else{
+            arr[*index] = temp;
+            (*index)++;
+        }
+        
     }
 }
 

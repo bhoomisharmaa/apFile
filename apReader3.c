@@ -39,8 +39,9 @@ void processDataStructures(char** dataString,int *dataStringIndex,struct Map *ar
             i++;//skips '|'
 
             // Values
-            temp.value = (char*)malloc(100*(sizeof(char)));
+            temp.value = (char*)malloc((sizeof(char)));
             while (data[i] != '~' && data[i] != '\0') {
+                temp.value = (char*)realloc(temp.key, (*index + 2) * sizeof(char)); 
                 temp.value[j++] = data[i++];
             } 
             temp.value[j] = '\0';
@@ -110,7 +111,6 @@ void readFileIntoArray(FILE *filePtr, char ***dataStringArr, int *dataIndex,int 
         }
         strcpy((*dataStringArr)[*dataIndex], buffer);
         if(strlen(buffer) <= 2) *(numberOfNestedData) = (*numberOfNestedData) + 1;
-
         (*dataIndex)++;
     }
 }
